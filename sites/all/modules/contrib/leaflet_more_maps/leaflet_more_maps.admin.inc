@@ -10,22 +10,44 @@
  */
 function leaflet_more_maps_admin_configure() {
 
-  $skobbler_key = variable_get('leaflet_more_maps_skobbler_key');
-  $form['keys'] = array(
+  // First a global setting to enter the Google sat map version number
+  $form['global_settings'] = array(
     '#type' => 'fieldset',
     '#collapsible' => TRUE,
-    '#collapsed' => TRUE,
-    '#title' => t('Third party application keys'),
+    '#collapsed' => FALSE,
+    '#title' => t('Global settings'),
   );
-  $form['keys']['skobbler_key'] = array(
+
+  // An arbitrary map tile.
+  $google_sat_test_url = 'http://khms2.googleapis.com/kh?x=428&y=242&z=9&v=';
+  for ($v = 713; $v < 1000; $v++) {
+    if (leaflet_more_maps_check_url($google_sat_test_url . $v)) {
+      break;
+    }
+  }
+  if ($v < 1000) {
+    // Found! Now find the first that does NOT work, return version before it.
+    while (leaflet_more_maps_check_url($google_sat_test_url . ++$v)) { }
+    $v--;
+  }
+
+  $form['global_settings']['google_satellite_version'] = array(
     '#type' => 'textfield',
-    '#title' => t('<a href="@url" target="skobbler">Skobbler</a> API key', array('@url' => 'http://maps.skobbler.com')),
-    '#default_value' => $skobbler_key,
-    '#description' => t('<a href="@url" target="skobbler">Generate Skobbler API key</a>. Make sure to add your Skobbler referrers when you generate your API key. If you are on a subdomain, make sure you add the root domain as well.', array('@url' => 'http://developer.skobbler.com/web-tiles/api-key')),
+    '#title' => t('Google satellite map version'),
+    '#default_value' => variable_get('google_satellite_version', 713),
+    '#description' => t('Latest working version: %version', array('%version' => ($v < 1000) ? $v : '?')),
   );
 
   $map_info = array();
-  // @todo call hook_leaflet_map_info() ?
+  foreach (module_implements('leaflet_map_info') as $module) {
+    if ($module !== 'leaflet_more_maps') {
+      $function = $module . '_leaflet_map_info';
+      if (function_exists($function)) {
+        $result = call_user_func_array($function, array());
+        $map_info = array_merge_recursive($map_info, $result);
+      }
+    }
+  }
   _leaflet_more_maps_assemble_default_map_info($map_info);
 
   $all_layer_keys = array();
@@ -70,7 +92,7 @@ function leaflet_more_maps_admin_configure() {
       '#type' => 'checkbox',
       '#title' => t('Reverse order in layer switcher'),
       '#default_value' => $custom_map_layers[$i]['reverse-order'],
-      '#description' => t('The last layer in the switcher will be the default.'),
+      '#description' => t('The first layer in the switcher will be the default.'),
     );
     // Organise the $form_state['values'] structure available after submission.
     $form['map'][$i]['map-key']['#parents'] = array(
@@ -98,6 +120,9 @@ function leaflet_more_maps_admin_configure() {
 function leaflet_more_maps_admin_configure_form_submit($form, &$form_state) {
 
   // form_state_values_clean($form_state);
+
+  variable_set('google_satellite_version', $form_state['values']['google_satellite_version']);
+
   $custom_maps = $form_state['values']['map'];
 
   // Clear out the unticked boxes.
@@ -105,10 +130,32 @@ function leaflet_more_maps_admin_configure_form_submit($form, &$form_state) {
     $custom_map['layer-keys'] = array_filter($custom_map['layer-keys']);
   }
   variable_set('leaflet_more_maps_custom_maps', $custom_maps);
-  variable_set('leaflet_more_maps_skobbler_key', $form_state['values']['skobbler_key']);
 
   drupal_set_message(t('The map configurations have been saved.'));
 
   // Refresh the cache table or hook_leaflet_more_maps() won't be called.
   cache_clear_all('*', 'cache', TRUE);
+}
+
+/**
+ * A way to test if a URL returns an OK (200) response. 
+ *
+ * Thanks www.drupal.org/u/n20
+ *
+ * @param string $test_url
+ * @return boolean
+ */
+function leaflet_more_maps_check_url($test_url) {
+  $agent= 'Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1; SV1; .NET CLR 1.0.3705; .NET CLR 1.1.4322)';
+
+  $ch = curl_init();
+  curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+  curl_setopt($ch, CURLOPT_VERBOSE, true);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  curl_setopt($ch, CURLOPT_USERAGENT, $agent);
+  curl_setopt($ch, CURLOPT_URL, $test_url);
+  $result = curl_exec($ch);
+
+  $info = curl_getinfo($ch);
+  return ($info['http_code'] == 200);
 }
