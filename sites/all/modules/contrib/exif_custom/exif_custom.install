@@ -1,6 +1,14 @@
 <?php
 
-function exif_custom_schema(){
+/**
+ * @file
+ * Schema and update hook implementations for the EXIF Custom module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function exif_custom_schema() {
   $schema['exif_custom_maps'] = array(
     'description' => 'Stores a list of custom field maps for exif_custom module.',
     'fields' => array(
@@ -8,20 +16,16 @@ function exif_custom_schema(){
         'type' => 'serial',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('Mapping identifier')
+        'description' => 'Mapping identifier',
       ),
       'name' => array(
         'type' => 'text',
         'size' => 'normal',
         'not null' => TRUE,
-        'desciption' => t("The name of the mapping.")
-      )
+        'desciption' => 'The name of the mapping.',
+      ),
     ),
-    'unique keys' => array(
-      'mid' => array(
-        'mid'
-      )
-    )
+    'primary key' => array('mid'),
   );
   $schema['exif_custom_mapped_fields'] = array(
     'description' => 'Stores mappings of field for exif_custom module.',
@@ -30,27 +34,30 @@ function exif_custom_schema(){
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('The ID of the mapping being saved.')
+        'description' => 'The ID of the mapping being saved.',
       ),
       'exif_field' => array(
-        'type' => 'text',
+        'type' => 'varchar',
         'size' => 'normal',
+        'length' => '128',
+        'default' => '',
         'not null' => TRUE,
-        'desciption' => t("The EXIF field to save the mapping of.")
+        'desciption' => 'The EXIF field to save the mapping of.',
       ),
       'exif_example' => array(
         'type' => 'text',
         'size' => 'normal',
         'not null' => TRUE,
-        'desciption' => t("The EXIF field to save the mapping of.")
+        'desciption' => 'The EXIF field to save the mapping of.',
       ),
       'img_field' => array(
         'type' => 'text',
         'size' => 'normal',
         'not null' => TRUE,
-        'desciption' => t("The image field to map to.")
-      )
-    )
+        'desciption' => 'The image field to map to.',
+      ),
+    ),
+    'primary key' => array('mid', 'exif_field'),
   );
   $schema['exif_custom_users'] = array(
     'description' => 'Stores indivdual user\'s default mapping',
@@ -59,34 +66,42 @@ function exif_custom_schema(){
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('User\'s uid.')
+        'description' => "User's uid.",
       ),
       'mid' => array(
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
-        'description' => t('Default mid of user.')
-      )
-    )
+        'description' => 'Default mid of user.',
+      ),
+    ),
+    'primary key' => array('uid'),
   );
   return $schema;
 }
 
 /**
- * Set the default varaible to use the name instead of id.
+ * Implements hook_uninstall().
  */
-function exif_custom_update_7001(&$sandbox) {
-  //get all old mappings
-  $maps = array();
-  if ($existing_maps = _exif_custom_get_maps()) {
-    while($result = $existing_maps->fetchObject()){
-      //save map for updating
-      $maps[$result->mid] = $result->name;
-    }
-    //update the variable to use the name instead of serial id
-    $default_mid = variable_get('exif_custom_default','');
-    if (isset($maps[$default_mid])) {
-      variable_set('exif_custom_default',$maps[$default_mid]);
-    }
-  }
+function exif_custom_uninstall() {
+  variable_del('exif_custom_checks');
+  variable_del('exif_custom_default');
+  variable_del('exif_custom_exclude_paths');
+  variable_del('exif_custom_request_method');
+}
+
+/**
+ * Add primary keys to DB tables.
+ */
+function exif_custom_update_7100() {
+  db_change_field('exif_custom_mapped_fields', 'exif_field', 'exif_field', array(
+    'description' => 'EXIF tag name',
+    'type' => 'varchar',
+    'length' => '128',
+    'not null' => TRUE,
+    'default' => '',
+  ));
+  db_add_primary_key('exif_custom_users', array('uid'));
+  db_add_primary_key('exif_custom_mapped_fields', array('mid', 'exif_field'));
+  db_add_primary_key('exif_custom_maps', array('mid'));
 }

@@ -3,15 +3,20 @@ description = "Save EXIF data to custom fields"
 package = Image
 core = 7.x
 dependencies[] = file_entity
-; Information added by drupal.org packaging script on 2012-11-21
-version = "7.x-1.5"
-core = "7.x"
-project = "exif_custom"
-datestamp = "1353506263"
+configure = admin/config/content/exif_custom
+project = exif_custom
 
-; Information added by Drupal.org packaging script on 2014-01-21
-version = "7.x-1.14"
+files[] = tests/exif_custom.test
+
+test_dependencies[] = token
+test_dependencies[] = media
+test_dependencies[] = file_entity
+test_dependencies[] = views
+test_dependencies[] = ctools
+
+; Information added by Drupal.org packaging script on 2018-01-03
+version = "7.x-1.20"
 core = "7.x"
 project = "exif_custom"
-datestamp = "1390318106"
+datestamp = "1514981587"
 

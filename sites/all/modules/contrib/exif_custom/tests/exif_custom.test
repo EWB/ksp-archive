@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * @file
+ * Tests for exif_custom.module.
+ */
+
+/**
+ * Defines base class for media test cases.
+ */
+abstract class ExifCustomTestHelper extends DrupalWebTestCase {
+
+  /**
+   * Enable media and file entity modules for testing.
+   */
+  public function setUp() {
+    $modules = func_get_args();
+    if (isset($modules[0]) && is_array($modules[0])) {
+      $modules = $modules[0];
+    }
+    $modules[] = 'exif_custom';
+    $modules[] = 'media';
+    $modules[] = 'file_entity';
+    $modules[] = 'token';
+    $modules[] = 'views';
+    $modules[] = 'ctools';
+
+    parent::setUp($modules);
+  }
+
+  /**
+   * Utility function to create a test node.
+   *
+   * @param array $fields
+   *   Extra field values to insert.
+   *
+   * @return int
+   *   Returns the node ID.
+   */
+  protected function createNode(array $fields = array()) {
+    $body_content = 'test';
+    // Create an article node with a test value in body field.
+    $edit = array(
+      'title' => $this->randomName(8),
+      'body[und][0][value]' => $body_content,
+    );
+    // Save the article node. First argument is the URL, then the value array
+    // and the third is the label the button that should be "clicked".
+    $this->drupalPost('node/add/article', $edit, t('Save'));
+
+    // Get the article node that was saved by the unique title.
+    $node = $this->drupalGetNodeByTitle($edit['title']);
+    return $node->nid;
+  }
+
+}
+
+/**
+ * Test the module.
+ */
+class ExifCustomViewModeTestHelper extends ExifCustomTestHelper {
+
+  /**
+   * Get information function.
+   */
+  public static function getInfo() {
+    return array(
+      'name' => 'Exif Custom test',
+      'description' => 'Tests the exif_custom module (TODO: add more complete tests).',
+      'group' => 'Image',
+    );
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setUp() {
+    parent::setUp();
+    if (module_exists('exif_custom')) {
+      $this->assertEqual(module_exists('exif_custom'), TRUE, t('exif_custom module is enabled.'));
+    }
+
+    // Reset the permissions cache prior to calling drupalCreateUser.
+    // @see https://api.drupal.org/comment/28739#comment-28739
+    $this->checkPermissions(array(), TRUE);
+
+    $web_user = $this->drupalCreateUser(array(
+      'access administration pages',
+      'administer file types',
+      'view files',
+      'create article content',
+      'edit own article content',
+      'edit any article content',
+      'administer nodes',
+    ));
+    $this->drupalLogin($web_user);
+  }
+
+  /**
+   * Tests the behavior of node and file deletion.
+   */
+  public function testCreateNodeAndDelete() {
+    // Create a new node with file markup.
+    $nid = $this->createNode(array('test_field'));
+
+    // Delete the node.
+    node_delete($nid);
+    $node = node_load($nid);
+    $this->assertEqual(empty($node), TRUE, t('Node has been deleted.'));
+  }
+
+}

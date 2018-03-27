@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * Features file for the exif_custom module.
@@ -10,21 +11,20 @@
 function exif_custom_features_api() {
   return array(
     'exif_custom' => array(
-      'name'            => t('EXIF Custom mappings'),
-      'default_hook'    => 'exif_custom_export_maps',
-      'feature_source'  => TRUE,
-      'default_file'    => FEATURES_DEFAULTS_INCLUDED,
-      'file'            => drupal_get_path('module', 'exif_custom') . '/exif_custom.features.inc',
+      'name' => t('EXIF Custom mappings'),
+      'default_hook' => 'exif_custom_export_maps',
+      'feature_source' => TRUE,
+      'default_file' => FEATURES_DEFAULTS_INCLUDED,
+      'file' => drupal_get_path('module', 'exif_custom') . '/exif_custom.features.inc',
     ),
   );
 }
 
 /**
  * Implements COMPONENT_features_export_options().
- *
- * Inform features about the available mappings in the database.
  */
 function exif_custom_features_export_options() {
+  // Inform features about the available mappings in the database.
   return db_select('exif_custom_maps', 'ecm')
     ->fields('ecm', array('name', 'name'))
     ->execute()
@@ -33,10 +33,9 @@ function exif_custom_features_export_options() {
 
 /**
  * Implements COMPONENT_features_export().
- *
- * Process the features export array for mappings.
  */
 function exif_custom_features_export($data, &$export, $module_name) {
+  // Process the features export array for mappings.
   $export['dependencies']['exif_custom'] = 'exif_custom';
 
   foreach ($data as $component) {
@@ -46,13 +45,11 @@ function exif_custom_features_export($data, &$export, $module_name) {
   return array();
 }
 
-
 /**
  * Implements COMPONENT_features_export_render().
- *
- * Render mappings as code.
  */
 function exif_custom_features_export_render($module_name, $data) {
+  // Render mappings as code.
   $items = array();
   foreach ($data as $name) {
     $items[$name] = exif_custom_export_map($name);
@@ -63,7 +60,6 @@ function exif_custom_features_export_render($module_name, $data) {
 
   return array('exif_custom_export_maps' => $code);
 }
-
 
 /**
  * Implements COMPONENT_features_revert().
@@ -81,40 +77,42 @@ function exif_custom_features_enable_feature($module) {
 
 /**
  * Implements COMPONENT_features_rebuild().
- *
- * Store each exported mapping in the database.
  */
 function exif_custom_features_rebuild($module) {
+  // Store each exported mapping in the database.
   $defaults = features_get_default('exif_custom', $module);
+  if (empty($defaults)) {
+    return;
+  }
   foreach ($defaults as $map) {
     exif_custom_import_map($map);
   }
 }
 
 /**
- * Custom function for exporting mappings to code
+ * Custom function for exporting mappings to code.
  */
 function exif_custom_export_map($name) {
   $map = array();
-  //get the mid
+  // Get the mid.
   if ($mid = exif_custom_get_mid($name)) {
-    //get name
+    // Get the name.
     $name = db_select('exif_custom_maps', 'm')
       ->fields('m', array('name'))
       ->condition('m.mid', $mid)
       ->execute()
       ->fetchField();
 
-    //get all of the field mappings
+    // Get all of the field mappings.
     $fields = db_select('exif_custom_mapped_fields', 'mf')
-      ->fields('mf',array('exif_field', 'exif_example', 'img_field'))
+      ->fields('mf', array('exif_field', 'exif_example', 'img_field'))
       ->condition('mf.mid', $mid)
       ->execute()
       ->fetchAll();
 
     $map = array(
-      'name'          => $name,
-      'fields'        => $fields,
+      'name' => $name,
+      'fields' => $fields,
     );
   }
 
@@ -126,33 +124,33 @@ function exif_custom_export_map($name) {
  */
 function exif_custom_import_map($map) {
   if ($mid = exif_custom_get_mid($map['name'])) {
-    //delete the old field mappings to be updated.
+    // Delete the old field mappings to be updated.
     db_delete('exif_custom_mapped_fields')
-      ->condition('mid',$mid)
+      ->condition('mid', $mid)
       ->execute();
-  }else {
-    //create new map
+  }
+  else {
+    // Create new map.
     db_insert('exif_custom_maps')
       ->fields(array('name'))
-      ->values(array('name'  => $map['name']))
+      ->values(array('name' => $map['name']))
       ->execute();
-    //fetch mid
+    // Fetch mid.
     $mid = exif_custom_get_mid($map['name']);
   }
 
-  //insert fields
+  // Insert fields.
   $insert = db_insert('exif_custom_mapped_fields');
   $field_names = array_keys($map['fields'][0]);
   $field_names[] = 'mid';
 
   $insert->fields($field_names);
 
-  //add mid to field array
+  // Add mid to field array.
   foreach ($map['fields'] as $field) {
     $field['mid'] = $mid;
     $insert->values($field);
   }
 
   $insert->execute();
-
 }

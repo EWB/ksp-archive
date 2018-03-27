@@ -1,0 +1,52 @@
+<?php
+
+/**
+ * @file
+ * Provides Exif Custom module pages for testing purposes.
+ */
+
+/**
+ * Implements hook_exif_custom_info().
+ */
+function exif_custom_test_info() {
+  // Allow tests to enable or disable this hook.
+  if (!variable_get('exif_custom_test_info', FALSE)) {
+    return array();
+  }
+
+  $info['exif_custom_test'] = array(
+    'title' => t('Exif Custom module test'),
+    'class' => 'ExifCustomModuleTest',
+    'weight' => 50,
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_exif_custom_info_alter().
+ */
+function exif_custom_test_info_alter(&$info) {
+  // Allow tests to enable or disable this hook.
+  if (!variable_get('exif_custom_test_info_alter', FALSE)) {
+    return;
+  }
+
+  $info['exif_custom_test']['title'] = t('Altered test title');
+}
+
+/**
+ * Implements hook_menu().
+ */
+function exif_custom_test_menu() {
+  $items = array();
+
+  $items['exif_custom/test'] = array(
+    'title' => 'Exif Custom test',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exif_custom_test_form'),
+    'access arguments' => array('view files'),
+  );
+
+  return $items;
+}

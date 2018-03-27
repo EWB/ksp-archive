@@ -1,0 +1,12 @@
+name = Exif Custom test
+description = Provides hooks for testing Exif Custom module functionality.
+package = Image
+core = 7.x
+hidden = TRUE
+
+; Information added by Drupal.org packaging script on 2018-01-03
+version = "7.x-1.20"
+core = "7.x"
+project = "exif_custom"
+datestamp = "1514981587"
+
