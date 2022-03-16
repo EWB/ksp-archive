@@ -5,6 +5,5 @@ package = Panopoly
 version = 7.x-1.5
 project = panopoly_theme
 dependencies[] = panels
-stylesheets[all][] = 1
 datestamp = 1398891849
 features[features_api][] = api:2
