@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * item.features.field_base.inc
@@ -10,21 +11,13 @@
 function item_field_default_field_bases() {
   $field_bases = array();
 
-  // Exported field_base: 'field_dc_description'
+  // Exported field_base: 'field_dc_description'.
   $field_bases['field_dc_description'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_dc_description',
-    'foreign keys' => array(
-      'format' => array(
-        'columns' => array(
-          'format' => 'format',
-        ),
-        'table' => 'filter_format',
-      ),
-    ),
     'indexes' => array(
       'format' => array(
         0 => 'format',
@@ -37,21 +30,13 @@ function item_field_default_field_bases() {
     'type' => 'text_long',
   );
 
-  // Exported field_base: 'field_dc_original_format'
+  // Exported field_base: 'field_dc_original_format'.
   $field_bases['field_dc_original_format'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_dc_original_format',
-    'foreign keys' => array(
-      'format' => array(
-        'columns' => array(
-          'format' => 'format',
-        ),
-        'table' => 'filter_format',
-      ),
-    ),
     'indexes' => array(
       'format' => array(
         0 => 'format',
@@ -64,21 +49,13 @@ function item_field_default_field_bases() {
     'type' => 'text_long',
   );
 
-  // Exported field_base: 'field_dc_subject'
+  // Exported field_base: 'field_dc_subject'.
   $field_bases['field_dc_subject'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_dc_subject',
-    'foreign keys' => array(
-      'format' => array(
-        'columns' => array(
-          'format' => 'format',
-        ),
-        'table' => 'filter_format',
-      ),
-    ),
     'indexes' => array(
       'format' => array(
         0 => 'format',
@@ -93,21 +70,13 @@ function item_field_default_field_bases() {
     'type' => 'text',
   );
 
-  // Exported field_base: 'field_image'
+  // Exported field_base: 'field_image'.
   $field_bases['field_image'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
     'field_name' => 'field_image',
-    'foreign keys' => array(
-      'fid' => array(
-        'columns' => array(
-          'fid' => 'fid',
-        ),
-        'table' => 'file_managed',
-      ),
-    ),
     'indexes' => array(
       'fid' => array(
         0 => 'fid',

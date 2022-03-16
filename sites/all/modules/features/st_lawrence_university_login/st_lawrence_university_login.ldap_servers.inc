@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * st_lawrence_university_login.ldap_servers.inc
@@ -23,7 +24,7 @@ function st_lawrence_university_login_default_ldap_servers() {
   $ldap_servers_conf->followrefs = FALSE;
   $ldap_servers_conf->bind_method = 1;
   $ldap_servers_conf->binddn = 'cn=ldap_bind,ou=special,dc=stlawu,dc=local';
-  $ldap_servers_conf->bindpw = '';
+  $ldap_servers_conf->bindpw = '9to7b';
   $ldap_servers_conf->basedn = array(
     0 => 'ou=employees,dc=stlawu,dc=local',
     1 => 'ou=students,dc=stlawu,dc=local',

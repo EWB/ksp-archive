@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * st_lawrence_university_login.strongarm.inc
@@ -15,25 +16,25 @@ function st_lawrence_university_login_strongarm() {
   $strongarm->api_version = 1;
   $strongarm->name = 'ldap_authentication_conf';
   $strongarm->value = array(
+    'allowOnlyIfTextInDn' => array(),
+    'allowTestPhp' => '',
+    'authenticationMode' => 1,
+    'cookieExpire' => NULL,
+    'emailOption' => 3,
+    'emailUpdate' => 1,
+    'excludeIfNoAuthorizations' => NULL,
+    'excludeIfTextInDn' => array(),
+    'ldapImplementation' => NULL,
+    'ldapUserHelpLinkText' => 'Logon Help',
+    'ldapUserHelpLinkUrl' => NULL,
+    'loginUIPasswordTxt' => NULL,
+    'loginUIUsernameTxt' => NULL,
+    'seamlessLogin' => NULL,
     'sids' => array(
       'slu_directory' => 'slu_directory',
     ),
-    'authenticationMode' => 1,
-    'loginUIUsernameTxt' => NULL,
-    'loginUIPasswordTxt' => NULL,
-    'ldapUserHelpLinkUrl' => NULL,
-    'ldapUserHelpLinkText' => 'Logon Help',
-    'emailOption' => 3,
-    'emailUpdate' => 1,
-    'allowOnlyIfTextInDn' => array(),
-    'excludeIfTextInDn' => array(),
-    'allowTestPhp' => '',
-    'excludeIfNoAuthorizations' => NULL,
-    'ssoRemoteUserStripDomainName' => NULL,
     'ssoExcludedPaths' => array(),
-    'seamlessLogin' => NULL,
-    'ldapImplementation' => NULL,
-    'cookieExpire' => NULL,
+    'ssoRemoteUserStripDomainName' => NULL,
   );
   $export['ldap_authentication_conf'] = $strongarm;
 
@@ -63,25 +64,26 @@ function st_lawrence_university_login_strongarm() {
   $strongarm->api_version = 1;
   $strongarm->name = 'ldap_user_conf';
   $strongarm->value = array(
+    'accountsWithSameEmail' => 0,
+    'acctCreation' => 4,
+    'disableAdminPasswordField' => 1,
     'drupalAcctProvisionServer' => 'slu_directory',
-    'ldapEntryProvisionServer' => 0,
     'drupalAcctProvisionTriggers' => array(
-      2 => '2',
       1 => '1',
+      2 => '2',
     ),
+    'ldapEntryProvisionServer' => 0,
     'ldapEntryProvisionTriggers' => array(
+      3 => 0,
       6 => 0,
       7 => 0,
       8 => 0,
-      3 => 0,
     ),
-    'orphanedDrupalAcctBehavior' => 'ldap_user_orphan_email',
-    'orphanedCheckQty' => '100',
-    'userConflictResolve' => 2,
-    'manualAccountConflict' => '2',
-    'acctCreation' => 4,
     'ldapUserSynchMappings' => array(),
-    'disableAdminPasswordField' => 1,
+    'manualAccountConflict' => '2',
+    'orphanedCheckQty' => '100',
+    'orphanedDrupalAcctBehavior' => 'ldap_user_orphan_email',
+    'userConflictResolve' => 2,
   );
   $export['ldap_user_conf'] = $strongarm;
 

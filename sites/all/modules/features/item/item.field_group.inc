@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * item.field_group.inc
@@ -8,7 +9,7 @@
  * Implements hook_field_group_info().
  */
 function item_field_group_info() {
-  $export = array();
+  $field_groups = array();
 
   $field_group = new stdClass();
   $field_group->disabled = FALSE; /* Edit this to true to make a default field_group disabled initially */
@@ -20,23 +21,27 @@ function item_field_group_info() {
   $field_group->mode = 'form';
   $field_group->parent_name = '';
   $field_group->data = array(
-    'label' => 'Still Image',
-    'weight' => '7',
     'children' => array(
       0 => 'field_dc_original_format',
     ),
-    'format_type' => 'fieldset',
     'format_settings' => array(
-      'label' => 'Still Image',
+      'formatter' => 'collapsed',
       'instance_settings' => array(
-        'required_fields' => 1,
         'classes' => '',
         'description' => '',
+        'required_fields' => 1,
       ),
-      'formatter' => 'collapsed',
+      'label' => 'Still Image',
     ),
+    'format_type' => 'fieldset',
+    'label' => 'Still Image',
+    'weight' => '7',
   );
-  $export['group_still_image|node|item|form'] = $field_group;
+  $field_groups['group_still_image|node|item|form'] = $field_group;
 
-  return $export;
+  // Translatables
+  // Included for use with string extractors like potx.
+  t('Still Image');
+
+  return $field_groups;
 }

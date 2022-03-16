@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * item.features.field_instance.inc
@@ -10,7 +11,7 @@
 function item_field_default_field_instances() {
   $field_instances = array();
 
-  // Exported field_instance: 'node-item-body'
+  // Exported field_instance: 'node-item-body'.
   $field_instances['node-item-body'] = array(
     'bundle' => 'item',
     'default_value' => NULL,
@@ -60,7 +61,7 @@ function item_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-item-field_dc_description'
+  // Exported field_instance: 'node-item-field_dc_description'.
   $field_instances['node-item-field_dc_description'] = array(
     'bundle' => 'item',
     'default_value' => NULL,
@@ -106,7 +107,7 @@ function item_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-item-field_dc_original_format'
+  // Exported field_instance: 'node-item-field_dc_original_format'.
   $field_instances['node-item-field_dc_original_format'] = array(
     'bundle' => 'item',
     'default_value' => NULL,
@@ -152,7 +153,7 @@ function item_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-item-field_dc_subject'
+  // Exported field_instance: 'node-item-field_dc_subject'.
   $field_instances['node-item-field_dc_subject'] = array(
     'bundle' => 'item',
     'default_value' => NULL,
@@ -198,7 +199,7 @@ function item_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-item-field_image'
+  // Exported field_instance: 'node-item-field_image'.
   $field_instances['node-item-field_image'] = array(
     'bundle' => 'item',
     'deleted' => 0,

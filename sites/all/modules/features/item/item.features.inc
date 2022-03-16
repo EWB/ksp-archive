@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * item.features.inc
@@ -30,5 +31,6 @@ function item_node_info() {
       'help' => '',
     ),
   );
+  drupal_alter('node_info', $items);
   return $items;
 }

@@ -38,4 +38,5 @@ features[variable][] = menu_parent_item
 features[variable][] = node_options_item
 features[variable][] = node_preview_item
 features[variable][] = node_submitted_item
+features[variable][] = pathauto_node_item_pattern
 features_exclude[field_base][body] = body
