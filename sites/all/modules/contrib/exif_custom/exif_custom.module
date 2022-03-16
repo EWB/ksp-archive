@@ -9,80 +9,73 @@
  * Implements hook_menu().
  */
 function exif_custom_menu() {
-  $items['admin/config/content/exif_custom'] = array(
-    'title' => 'Custom Exif Mappings',
-    'page callback' => 'exif_custom_mappings',
-    'access arguments' => array(
-      'view image metadata',
-    ),
-    'description' => t('Customise mappings of EXIF data'),
-    'access callback' => 'user_access',
+  $items['admin/config/media/exif_custom'] = array(
     'type' => MENU_NORMAL_ITEM,
-  );
-  $items['admin/config/content/exif_custom/maps'] = array(
-    'title' => 'Custom Exif Mappings',
+    'title' => 'Custom EXIF Mappings',
+    'description' => 'Customise mappings of EXIF data',
     'page callback' => 'exif_custom_mappings',
-    'access arguments' => array(
-      'view image metadata',
-    ),
-    'description' => t('Customise mappings of EXIF data'),
-    'access callback' => 'user_access',
+    'access callback' => 'exif_custom_main_page_access',
+    'file' => 'exif_custom.pages.inc',
+  );
+  $items['admin/config/media/exif_custom/maps'] = array(
     'type' => MENU_DEFAULT_LOCAL_TASK,
-  );
-  $items['admin/config/content/exif_custom/new_map'] = array(
-    'title' => 'New Exif Mapping',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'exif_custom_new_map_form',
-    ),
-    'access arguments' => array(
-      'administer image metadata',
-    ),
+    'title' => 'Custom EXIF Mappings',
     'description' => 'Customise mappings of EXIF data',
-    'access callback' => 'user_access',
+    'page callback' => 'exif_custom_mappings',
+    'access callback' => 'exif_custom_main_page_access',
+    'file' => 'exif_custom.pages.inc',
+  );
+  $items['admin/config/media/exif_custom/add'] = array(
     'type' => MENU_LOCAL_TASK,
-  );
-  $items['admin/config/content/exif_custom/map/%'] = array(
-    'title' => 'Edit mapping',
-    // TODO: title callback?
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'exif_custom_map_edit_form',
-    ),
-    'access arguments' => array(
-      'administer image metadata',
-    ),
+    'title' => 'New EXIF Mapping',
     'description' => 'Customise mappings of EXIF data',
-    'access callback' => 'user_access',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exif_custom_new_map_form'),
+    'access arguments' => array('administer exif_custom'),
+    'file' => 'exif_custom.add.inc',
+  );
+  $items['admin/config/media/exif_custom/map/%'] = array(
     'type' => MENU_NORMAL_ITEM,
+    // @todo Title callback?
+    'title' => 'Edit mapping',
+    'description' => 'Customise mappings of EXIF data',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exif_custom_map_edit_form',),
+    'access arguments' => array('administer exif_custom'),
+    'file' => 'exif_custom.edit.inc',
   );
-  $items['admin/config/content/exif_custom/settings'] = array(
+  $items['admin/config/media/exif_custom/settings'] = array(
+    'type' => MENU_LOCAL_TASK,
     'title' => 'Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'exif_custom_settings_form',
-    ),
-    'access arguments' => array(
-      'administer image metadata',
-    ),
     'description' => 'Customise general settings for EXIF import',
-    'access callback' => 'user_access',
-    'type' => MENU_LOCAL_TASK,
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exif_custom_settings_form',),
+    'access arguments' => array('administer exif_custom'),
+    'file' => 'exif_custom.settings.inc',
   );
-  $items['admin/config/content/exif_custom/user'] = array(
-    'title' => 'User Settings',
-    'page callback' => 'drupal_get_form',
-    'page arguments' => array(
-      'exif_custom_settings_form_user',
-    ),
-    'access arguments' => array(
-      'have default image metadata profile',
-    ),
-    'description' => 'Customise general settings for EXIF import',
-    'access callback' => 'user_access',
+  $items['admin/config/media/exif_custom/user'] = array(
     'type' => MENU_LOCAL_TASK,
+    'title' => 'User Settings',
+    'description' => 'Customise general settings for EXIF import',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('exif_custom_settings_form_user'),
+    'access arguments' => array('have default image metadata profile'),
+    'file' => 'exif_custom.user.inc',
   );
   return $items;
+}
+
+/**
+ * Access callback for the main admin page.
+ */
+function exif_custom_main_page_access() {
+  if (user_access('view image metadata')) {
+    return TRUE;
+  }
+  elseif (user_access('administer exif_custom')) {
+    return TRUE;
+  }
+  return FALSE;
 }
 
 /**
@@ -98,116 +91,11 @@ function exif_custom_permission() {
       'title' => t('View image metadata'),
       'description' => t('See what image metdata import profiles have been created.'),
     ),
-    'administer image metadata' => array(
+    'administer exif_custom' => array(
       'title' => 'Administer image metadata',
       'description' => t('Administer image metadata import profiles'),
     ),
   );
-}
-
-/**
- * General settings page for the exif_custom module.
- */
-function exif_custom_settings_form() {
-  $options = array(
-    'auto-import' => 'Automatically save metadata using the default mapping',
-  );
-  $form['auto-import-options'] = array(
-    '#type' => 'checkboxes',
-    '#title' => 'Automatic import',
-    '#options' => $options,
-    '#description' => t('Each user may set their own default mapping, in addition a site default may be set.'),
-    '#default_value' => variable_get('exif_custom_checks', array()),
-  );
-  $form['exif_custom_request_method'] = array(
-    '#type' => 'radios',
-    '#title' => t('Image request method'),
-    '#options' => array(
-      'legacy' => t('Use drupal_realpath() - works with HTTP Authentication, self-signed certificates, etc.'),
-      'new' => t('Use file_create_url() - works with CDNs and other remote file storage systems.'),
-    ),
-    '#default_value' => variable_get('exif_custom_request_method', 'legacy'),
-  );
-  $mappings = _exif_custom_get_maps();
-  $options = array();
-  $options['none'] = t('- No default selected -');
-  if (!empty($mappings)) {
-    while ($result = $mappings->fetchObject()) {
-      $options[$result->mid] = $result->name;
-    }
-    $form['site-default'] = array(
-      '#type' => 'select',
-      '#title' => 'Site default mapping',
-      '#default_value' => variable_get('exif_custom_default', ''),
-      '#options' => $options,
-      '#description' => 'Individual users may override the site default.',
-    );
-
-    $form['exclude-paths'] = array(
-      '#type' => 'textarea',
-      '#title' => t('Exclude paths'),
-      '#default_value' => variable_get('exif_custom_exclude_paths', ''),
-      '#description' => t('Newline separated list of file-paths that should be skipped, must be prefixed with public:// or temporary:// or private://. The directory-part of the path should have a trailing / unless you want to match a partial directory-name. You will most likely want to end the pattern with an asterisk.<br>Eg. public://some_directory/image* will match files in "some_directory" starting with "image" while public://some_directory/* will match any files in "some_directory"'),
-    );
-  }
-  else {
-    drupal_set_message(t('You have not yet created any mappings.'));
-  }
-  $form['#submit'][] = 'exif_custom_settings_form_submit';
-  return system_settings_form($form);
-}
-
-/**
- * User settings form.
- */
-function exif_custom_settings_form_user() {
-  $mappings = _exif_custom_get_maps();
-  $options = array();
-  $options['none'] = '';
-  if (!empty($mappings)) {
-    while ($result = $mappings->fetchObject()) {
-      $options[$result->mid] = $result->name;
-    }
-  }
-  else {
-    drupal_set_message(t('You have not yet created any mappings.'));
-  }
-  $form['user-default'] = array(
-    '#type' => 'select',
-    '#title' => 'Personal default mapping',
-    '#default_value' => exif_custom_get_user_default(),
-    '#options' => $options,
-  );
-  $form['#submit'][] = 'exif_custom_settings_form_user_submit';
-  return $form;
-}
-
-/**
- *
- */
-function exif_custom_settings_form_submit($form, $form_state) {
-  variable_set('exif_custom_checks', $form_state['values']['auto-import-options']);
-  variable_set('exif_custom_default', $form_state['values']['site-default']);
-  variable_set('exif_custom_exclude_paths', ($form_state['values']['exclude-paths']));
-}
-
-/**
- * FormAPI submission callback for exif_custom_settings_form_user().
- */
-function exif_custom_settings_form_user_submit($form, $form_state) {
-  global $user;
-  $mid = 0;
-  if (isset($form_state['values']['user-default'])) {
-    $mid = (int) $form_state['values']['user-default'];
-  }
-  db_merge('exif_custom_users')
-    ->key(array(
-      'uid' => $user->uid,
-    ))
-    ->fields(array(
-      'mid' => $mid,
-    ))
-    ->execute();
 }
 
 /**
@@ -227,234 +115,7 @@ function exif_custom_get_user_default() {
 }
 
 /**
- * Form API callback to edit a mapping.
- */
-function exif_custom_map_edit_form() {
-  // Let's get the mid.
-  $mid = arg(5);
-  // Load mappings.
-  $sql = 'SELECT * FROM {exif_custom_mapped_fields} WHERE mid = :mid';
-  $results = db_query($sql, array(
-    ':mid' => $mid,
-  ));
-  // Load fields possible to map to.
-  $fields = field_info_instances('file', 'image');
-  $select_fields = array();
-  // Allow mapping to title field.
-  $select_fields['filename'] = 'File name';
-  // Allow no field to be selected.
-  $select_fields['none'] = 'none';
-  foreach ($fields as $field => $field_data) {
-    $select_fields[$field] = $field_data['label'];
-  }
-  $form['mappings-table-start'] = array(
-    '#markup' => '<table><thead><tr><td><strong>EXIF field</strong></td><td><strong>Example</strong></td><td><strong>Mapped to</strong></td></tr></thead>',
-  );
-  while ($result = $results->fetchObject()) {
-    $form[$result->exif_field] = array(
-      '#markup' => $result->exif_field,
-      '#prefix' => '<tr><td>',
-      '#suffix' => '</td>',
-    );
-    $form['example:' . $result->exif_field] = array(
-      '#markup' => $result->exif_example,
-      '#prefix' => '<td>',
-      '#suffix' => '</td>',
-    );
-    $form['img_field:' . $result->exif_field] = array(
-      '#type' => 'select',
-      '#default_value' => $result->img_field,
-      '#options' => $select_fields,
-      '#prefix' => '<td>',
-      '#suffix' => '</td></tr>',
-    );
-  }
-  $form['mappings-table-end'] = array(
-    '#markup' => '</table>',
-  );
-  $form['delete'] = array(
-    '#type' => 'checkboxes',
-    '#title' => 'Delete',
-    '#options' => array(
-      'delete' => t('Delete this mapping'),
-    ),
-  );
-  $form['submit'] = array(
-    '#type' => 'submit',
-    '#value' => 'Save',
-  );
-  $form['#validate'][] = 'exif_custom_map_edit_validate';
-  $form['#submit'][] = 'exif_custom_map_edit_submit';
-  return $form;
-}
-
-/**
- * Validation callback for exif_custom_map_edit_form().
- */
-function exif_custom_map_edit_validate($form, &$form_state) {
-  // @todo Check for duplicates.
-}
-
-/**
- * Submission callback for exif_custom_map_edit_form().
- */
-function exif_custom_map_edit_submit($form, $form_state) {
-  $mid = arg(5);
-  $test = (string) $form_state['values']['delete']['delete'];
-  if ($test == 'delete') {
-    db_query('DELETE FROM {exif_custom_mapped_fields} WHERE mid = :mid', array(
-      ':mid' => $mid,
-    ));
-    db_query('DELETE FROM {exif_custom_maps} WHERE mid = :mid', array(
-      ':mid' => $mid,
-    ));
-    db_query('DELETE FROM {exif_custom_users} WHERE mid = :mid', array(
-      ':mid' => $mid,
-    ));
-    drupal_goto('admin/config/content/exif_custom/maps');
-    return;
-  }
-
-  foreach ($form_state['values'] as $field => $value) {
-    if (substr($field, 0, 10) != 'img_field:') {
-      break;
-    }
-    $field = substr($field, 10);
-    db_query("UPDATE {exif_custom_mapped_fields}
-      SET img_field = :img_field
-      WHERE mid = :mid AND exif_field = :exif_field", array(
-        ':img_field' => $value,
-        ':mid' => $mid,
-        ':exif_field' => $field,
-      ));
-  }
-}
-
-/**
- * Main mappings page.
- */
-function exif_custom_mappings() {
-  $output = '';
-  $mappings = _exif_custom_get_maps();
-  if ($mappings == FALSE) {
-    $output .= '<p>No mappings have been created yet.</p>';
-  }
-  else {
-    $site_default_mid = variable_get('exif_custom_default', -1);
-    $output .= '<table>';
-    while ($result = $mappings->fetchObject()) {
-      if (exif_custom_get_user_default() == $result->mid) {
-        $default = '<strong>User Default</strong>';
-      }
-      elseif ($site_default_mid == $result->mid) {
-        $default = 'Site Default';
-      }
-      else {
-        $default = '';
-      }
-      $output .= '<tr><td>' . $result->name . '</td>';
-      $output .= '<td>' . l('edit', 'admin/config/content/exif_custom/map/' . $result->mid) . '</td>';
-      $output .= '<td>' . $default . '</td></tr>';
-    }
-    $output .= '</table>';
-  }
-  return $output;
-}
-
-/**
- * Initial form for creating a new mapping using an example file.
- */
-function exif_custom_new_map_form() {
-  $form['name'] = array(
-    '#title' => t('Mapping name'),
-    '#type' => 'textfield',
-    '#description' => t("The name for this mapping (e.g. Jeremy's camera)."),
-    '#required' => TRUE,
-  );
-  $form['example_file'] = array(
-    '#title' => t("Example file"),
-    '#type' => 'file',
-    '#description' => t('A file with the EXIF fields you would like to map. Required.'),
-    '#required' => FALSE,
-  );
-  $form['submit'] = array(
-    '#value' => 'Save',
-    '#type' => 'submit',
-  );
-  return $form;
-}
-
-/**
- * Form validation callback for exif_custom_new_map_form().
- */
-function exif_custom_new_map_form_validate($form, &$form_state) {
-  // Check that the name is unique.
-  $sql = 'SELECT name FROM {exif_custom_maps} WHERE name = :name';
-  $result = db_query($sql, array(
-    ':name' => $form_state['values']['name'],
-  ))->rowCount();
-  if ($result > 0) {
-    form_set_error('name', t('The name must be unique'));
-  }
-
-  // Verify an example image was uploaded.
-  if (!isset($_FILES, $_FILES['files'], $_FILES['files']['name'], $_FILES['files']['name']['example_file'])) {
-    form_set_error('example_file', t('An example file must be provided.'));
-  }
-
-  // @todo Check image is an allowed type.
-}
-
-/**
- * Form submission callback for exif_custom_new_map_form().
- */
-function exif_custom_new_map_form_submit($form, &$form_state) {
-  // Handle file uploading.
-  $validators = array(
-    'file_validate_is_image' => array(
-      '',
-    ),
-  );
-
-  // Save file as temporary.
-  $file = file_save_upload('example_file', $validators);
-  $fields = exif_custom_get_exif_fields($file->uri);
-
-  // Add the mapping to the database.
-  db_query('INSERT INTO {exif_custom_maps}(name) VALUES (:name)', array(
-      ':name' => $form_state['values']['name'],
-    ));
-
-  // Retrieve the mid.
-  $mid = db_query('SELECT mid FROM {exif_custom_maps} WHERE name = :name', array(
-      ':name' => $form_state['values']['name'],
-    ))->fetchField();
-
-  // Save each of the field mappings.
-  foreach ($fields as $key => $value) {
-    if (is_array($value)) {
-      $value_for_db = implode("; ", $value);
-    }
-    else {
-      $value_for_db = $value;
-    }
-    db_query("INSERT INTO {exif_custom_mapped_fields}
-      (mid, exif_field, exif_example, img_field)
-      VALUES (:mid, :exif_field, :exif_example, :img_field)", array(
-        ':mid' => $mid,
-        ':exif_field' => $key,
-        ':exif_example' => $value_for_db,
-        ':img_field' => 'none',
-      ));
-  }
-  drupal_set_message('New EXIF mapping has been saved: ' . $form_state['values']['name'], 'status');
-
-  // Redirect to the edit page.
-  $form_state['redirect'] = 'admin/config/content/exif_custom/map/' . $mid;
-}
-
-/**
- * Get a list of cusotm maps.
+ * Get a list of custom maps.
  *
  * @return object|bool
  *   Either the list of mappings, or FALSE if none available.
@@ -472,16 +133,17 @@ function _exif_custom_get_maps() {
 /**
  * Implements hook_entity_presave().
  */
-function exif_custom_entity_presave($file) {
-  $config = variable_get('exif_custom_checks', array());
-  if (!empty($config['auto-import'])) {
-    $file = exif_custom_process_entity($file);
+function exif_custom_entity_presave($entity, $entity_type) {
+  if ($entity_type == 'file') {
+    exif_custom_process_entity($entity);
   }
-  return $file;
 }
 
 /**
- * Implements hook_process_entity().
+ * Process a given entity to see if it has EXIF data to be saved.
+ *
+ * @param object $file
+ *   The file being processed.
  */
 function exif_custom_process_entity(&$file) {
   if (!isset($file->type) || !isset($file->uri)) {
@@ -491,9 +153,6 @@ function exif_custom_process_entity(&$file) {
     return;
   }
   if (arg(3) == 'exif_custom') {
-    return;
-  }
-  if (arg(2) == 'edit') {
     return;
   }
 
@@ -513,9 +172,13 @@ function exif_custom_process_entity(&$file) {
     return;
   }
 
-  $mappings = exif_custom_get_mapping();
   $data = exif_custom_get_exif_fields($file->uri, TRUE);
   if (empty($data)) {
+    return;
+  }
+
+  $mappings = exif_custom_get_mapping();
+  if (empty($mappings)) {
     return;
   }
 
@@ -529,11 +192,19 @@ function exif_custom_process_entity(&$file) {
     if (!isset($data[$values->exif_field])) {
       continue;
     }
+
     // File name is special case.
     if ($field == 'filename') {
       $file->filename = $data[$values->exif_field];
       continue;
     }
+
+    // Optionally process fields which have already been imported. This avoids
+    // re-processing files which have already been saved.
+    if (!variable_get('exif_custom_overwrite_existing') && !empty($file->{$field})) {
+      continue;
+    }
+
     $array = array();
     $field_info = field_info_field($field);
     $instance_info = field_info_instance('file', $field, 'image');
@@ -590,7 +261,8 @@ function exif_custom_process_entity(&$file) {
         $array[$lang]['0']['value'] = $data[$values->exif_field];
     }
 
-    $file->$field = $array;
+    // Set the values.
+    $file->{$field} = $array;
   }
 }
 

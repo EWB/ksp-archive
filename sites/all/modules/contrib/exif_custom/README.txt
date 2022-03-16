@@ -11,6 +11,9 @@ Supports the following image meta data:
 * XMP, using custom logic.
 * IPTC, using PHP's getimagesize() and iptcparse() functions.
 
+Also included is EXIF Data Display, a sub module for display all of an image's
+meta data on the image edit form.
+
 
 Configuration
 --------------------------------------------------------------------------------

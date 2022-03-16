@@ -108,6 +108,8 @@ class views_timelinejs_plugin_style_timelinejs extends views_plugin_style {
       '#title' => t('Scale factor'),
       '#description' => t('How many screen widths wide the timeline should be at first presentation.'),
       '#options' => array(
+        '0.25' => t('0.25'),
+        '0.5' => t('0.5'),
         '1' => t('1'),
         '2' => t('2'),
         '3' => t('3'),
@@ -706,6 +708,11 @@ class views_timelinejs_plugin_style_timelinejs extends views_plugin_style {
    * Processes timeline options before theming.
    */
   protected function prepare_timeline_options() {
+    // Set the script_path option for locally-hosted libraries.
+    if (variable_get('views_timelinejs_library', 'cdn') == 'local') {
+      $this->prepareScriptPathOption();
+    }
+
     // Set the language option to the site's default if it is empty.
     if (empty($this->options['timeline_config']['language'])) {
       $this->prepare_language_option();
@@ -738,6 +745,15 @@ class views_timelinejs_plugin_style_timelinejs extends views_plugin_style {
     elseif (isset($language_map[$language->language])) {
       $this->options['timeline_config']['language'] = $language_map[$language->language];
     }
+  }
+
+  /**
+   * Sets the timeline script_path option to the library's location.
+   */
+  protected function prepareScriptPathOption() {
+    global $base_url;
+    $script_path = $base_url . '/sites/all/libraries/TimelineJS3/compiled/js';
+    $this->options['timeline_config']['script_path'] = $script_path;
   }
 
 }

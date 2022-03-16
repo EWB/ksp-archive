@@ -1,3 +1,26 @@
+EXIF_Custom 7.x-1.22, 2019-02-16
+--------------------------------
+By DamienMcKenna: Documented exif_custom_process_entity().
+#2995082 by DamienMcKenna: Correct hook_entity_presave().
+#2927982 by DamienMcKenna: Rewrote test coverage from scratch.
+#2994216 by DamienMcKenna: Control whether EXIF data is reloaded on file update.
+#2995145 by DamienMcKenna: Make image processing automatic.
+
+
+EXIF_Custom 7.x-1.21, 2018-04-02
+--------------------------------
+#2935613 by DamienMcKenna: Move menu items under admin/config/media.
+#2935832 by DamienMcKenna: Simplify hook_menu().
+#2935833 by DamienMcKenna: Fix spelling of "EXIF" :)
+#2935837 by DamienMcKenna: Redirect to the mappings list page after updating a
+  mapping.
+#2927984 by smustgrave: Remove primary keys before adding new ones.
+#2942048 by DamienMcKenna: New submodule with a field widget for images to show
+  all available EXIF values.
+#2942055 by yo30, DamienMcKenna: 'Administer' permission clashes with EXIF
+  module.
+
+
 EXIF_Custom 7.x-1.20, 2018-01-03
 --------------------------------
 #2932214 by DamienMcKenna: Fixed compatibility with older PHP releases.
