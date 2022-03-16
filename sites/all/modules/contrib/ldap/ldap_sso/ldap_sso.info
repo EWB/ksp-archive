@@ -1,10 +1,11 @@
-name = LDAP Help
-description = LDAP Help for configuration and reporting issues.
+name = LDAP SSO
+description = Implements Single Sign On (SSO) LDAP Authentication
 package = Lightweight Directory Access Protocol
-core = 7.x
-
 dependencies[] = ldap_servers
-dependencies[] = ldap_test
+dependencies[] = ldap_authentication
+core = 7.x
+configure = admin/config/people/ldap/authentication
+
 ; Information added by Drupal.org packaging script on 2017-05-30
 version = "7.x-2.2"
 core = "7.x"
