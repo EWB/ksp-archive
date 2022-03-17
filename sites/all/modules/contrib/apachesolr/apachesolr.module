@@ -10,6 +10,16 @@ define('APACHESOLR_READ_ONLY', 1);
 define('APACHESOLR_API_VERSION', '3.0');
 
 /**
+ * Implements hook_init().
+ */
+function apachesolr_init() {
+  if (arg(0) == 'admin') {
+    // Add the CSS for this module
+    drupal_add_css(drupal_get_path('module', 'apachesolr') . '/apachesolr.css');
+  }
+}
+
+/**
  * Implements hook_menu().
  */
 function apachesolr_menu() {
@@ -323,7 +333,7 @@ function apachesolr_facetapi_query_types() {
  */
 function apachesolr_facetapi_facet_info($searcher_info) {
   $facets = array();
-  if ('apachesolr' == $searcher_info['module']) {
+  if ('apachesolr' == $searcher_info['adapter']) {
     $environment = apachesolr_environment_load($searcher_info['instance']);
 
     if (!empty($environment['conf']['facet callbacks'])) {
@@ -642,7 +652,7 @@ function apachesolr_user_update(&$edit, $account, $category) {
 }
 
 /**
- * Implements hook_taxonomy_term_update().
+ * Implements hook_term_update().
  *
  * Mark nodes as needing re-indexing if a term name changes.
  *
@@ -801,7 +811,6 @@ function apachesolr_node_type_insert($info) {
       $bundles[] = $info->type;
       // Set the new bundle as indexable for all environments
       apachesolr_index_set_bundles($env['env_id'], 'node', $bundles);
-      apachesolr_environments_clear_cache();
     }
   }
 }
@@ -854,7 +863,7 @@ function apachesolr_clear_cache($env_id) {
     $solr->clearCache();
   }
   catch (Exception $e) {
-    apachesolr_log_exception($env_id, $e);
+    watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
     drupal_set_message(nl2br(check_plain($e->getMessage())), 'warning');
   }
 }
@@ -866,14 +875,13 @@ function apachesolr_clear_cache($env_id) {
  * @todo This is not according to drupal code standards
  */
 function apachesolr_set_stats_message($text, $type = 'status', $repeat = FALSE) {
-  $env_id = apachesolr_default_environment();
   try {
-    $solr = apachesolr_get_solr($env_id);
+    $solr = apachesolr_get_solr();
     $stats_summary = $solr->getStatsSummary();
     drupal_set_message(check_plain(t($text, $stats_summary)), $type, FALSE);
   }
   catch (Exception $e) {
-    apachesolr_log_exception($env_id, $e);
+    watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
   }
 }
 
@@ -950,10 +958,10 @@ function apachesolr_cron($env_id = NULL) {
 
   // Optimize the index (by default once a day).
   $optimize_interval = variable_get('apachesolr_optimize_interval', 60 * 60 * 24);
-  // Protect from too-frequent optimizations.
-  $optimize_attempt_interval = variable_get('apachesolr_optimize_attempt_interval', 60 * 60);
+  $time = REQUEST_TIME;
 
   foreach($environments as $env_id) {
+    $last = apachesolr_environment_variable_get($env_id, 'apachesolr_last_optimize', 0);
 
     // Indexes in read-only mode do not change the index, so will not update, delete, or optimize during cron.
     if (apachesolr_environment_variable_get($env_id, 'apachesolr_read_only', APACHESOLR_READ_WRITE) == APACHESOLR_READ_ONLY) {
@@ -975,33 +983,17 @@ function apachesolr_cron($env_id = NULL) {
       }
     }
 
-    // Optimize index.
-    $time = time();
-    $last_optimize_success = apachesolr_environment_variable_get($env_id, 'apachesolr_last_optimize_success', 0);
-    $last_optimize_attempt = apachesolr_environment_variable_get($env_id, 'apachesolr_last_optimize_attempt', 0);
-    if (
-      $optimize_interval && $optimize_attempt_interval
-      && ($time - $last_optimize_success >= $optimize_interval)
-      && ($time - $last_optimize_attempt >= $optimize_attempt_interval)
-    ) {
-      try {
-        $solr = apachesolr_get_solr($env_id);
-        apachesolr_environment_variable_set($env_id, 'apachesolr_last_optimize_attempt', $time);
-        $solr->optimize(FALSE, FALSE, 600);
-        apachesolr_environment_variable_set($env_id, 'apachesolr_last_optimize_success', $time);
+    try {
+      $solr = apachesolr_get_solr($env_id);
+      if ($optimize_interval && ($time - $last > $optimize_interval)) {
+        $solr->optimize(FALSE, FALSE);
+        apachesolr_environment_variable_set($env_id, 'apachesolr_last_optimize', $time);
         apachesolr_set_last_index_updated($env_id, $time);
       }
-      catch (Exception $e) {
-        apachesolr_log_exception($env_id, $e);
-      }
-    }
-
-    // Only clear the cache if the index changed.
-    // TODO: clear on some schedule if running multi-site.
-    $updated = apachesolr_get_last_index_updated($env_id);
-    if ($updated > 0) {
-      try {
-        $solr = apachesolr_get_solr($env_id);
+      // Only clear the cache if the index changed.
+      // TODO: clear on some schedule if running multi-site.
+      $updated = apachesolr_get_last_index_updated($env_id);
+      if ($updated > 0) {
         $solr->clearCache();
         // Re-populate the luke cache.
         $solr->getLuke();
@@ -1011,9 +1003,9 @@ function apachesolr_cron($env_id = NULL) {
           apachesolr_set_last_index_updated($env_id);
         }
       }
-      catch (Exception $e) {
-        apachesolr_log_exception($env_id, $e);
-      }
+    }
+    catch (Exception $e) {
+      watchdog('Apache Solr', nl2br(check_plain($e->getMessage())) . ' in apachesolr_cron', NULL, WATCHDOG_ERROR);
     }
 
     // We can safely process the apachesolr_cron_limit nodes at a time without a
@@ -1380,9 +1372,6 @@ function apachesolr_environment_save($environment) {
     ->fields($environment)
     ->execute();
   // Update the environment variables (if any).
-  db_delete('apachesolr_environment_variable')
-    ->condition('env_id', $environment['env_id'])
-    ->execute();
   foreach ($conf as $name => $value) {
     db_merge('apachesolr_environment_variable')
       ->key(array('env_id' => $environment['env_id'], 'name' => $name))
@@ -1496,7 +1485,7 @@ function apachesolr_server_status($url, $class = NULL) {
       $ping = @$solr->ping(variable_get('apachesolr_ping_timeout', 4));
     }
     catch (Exception $e) {
-      apachesolr_log_exception($url, $e);
+      watchdog('Apache Solr', nl2br(check_plain($e->getMessage())), NULL, WATCHDOG_ERROR);
     }
     $status[$key] = $ping;
   }
@@ -1584,7 +1573,7 @@ function apachesolr_do_query(DrupalSolrQueryInterface $current_query) {
       }
     }
     if ($qalt) {
-      $query->addParam('q.alt', implode(' AND ', $qalt));
+      $query->addParam('q.alt', implode(' ', $qalt));
     }
   }
   // We must run htmlspecialchars() here since converted entities are in the index.
@@ -1970,11 +1959,8 @@ function apachesolr_get_index_bundles($env_id, $entity_type) {
  * Implements hook_entity_insert().
  */
 function apachesolr_entity_insert($entity, $type) {
-  // For our purposes there's really no difference between insert and update,
-  // unless $entity->status == 0, then don't bother
-  if(isset($entity->status) && $entity->status) {
-    return apachesolr_entity_update($entity, $type);
-  }
+  // For our purposes there's really no difference between insert and update.
+  return apachesolr_entity_update($entity, $type);
 }
 
 /**
@@ -2007,6 +1993,7 @@ function apachesolr_entity_update($entity, $type) {
   // Include the index file for the status callback
   module_load_include('inc', 'apachesolr', 'apachesolr.index');
   if (apachesolr_entity_should_index($entity, $type)) {
+    $info = entity_get_info($type);
     list($id, $vid, $bundle) = entity_extract_ids($type, $entity);
 
     // Check status callback before sending to the index
@@ -2072,13 +2059,10 @@ function apachesolr_get_indexer_table($type) {
  */
 function apachesolr_entity_delete($entity, $entity_type) {
   list($entity_id) = entity_extract_ids($entity_type, $entity);
-
-  if (apachesolr_entity_should_index($entity, $entity_type)) {
-    // Get all environments and delete it from their table and index
-    $environments = apachesolr_load_all_environments();
-    foreach ($environments as $environment) {
-      apachesolr_remove_entity($environment['env_id'], $entity_type, $entity_id);
-    }
+  // Get all environments and delete it from their table and index
+  $environments = apachesolr_load_all_environments();
+  foreach ($environments as $environment) {
+    apachesolr_remove_entity($environment['env_id'], $entity_type, $entity_id);
   }
 }
 
@@ -2822,7 +2806,12 @@ function theme_apachesolr_sort_link($vars) {
     $icon = ' ' . theme('tablesort_indicator', array('style' => $vars['direction']));
   }
   if ($vars['active']) {
-    $vars['options']['attributes']['class'][] = 'active';
+    if (isset($vars['options']['attributes']['class'])) {
+      $vars['options']['attributes']['class'] .= ' active';
+    }
+    else {
+      $vars['options']['attributes']['class'] = 'active';
+    }
   }
   return $icon . apachesolr_l($vars['text'], $vars['path'], $vars['options']);
 }
@@ -2878,7 +2867,7 @@ function apachesolr_environment_load_subrecords(&$environments) {
   $all_index_bundles_keyed = array();
   foreach ($all_index_bundles as $env_info) {
     extract($env_info);
-    $all_index_bundles_keyed[$env_id][$entity_type][$bundle] = $bundle;
+    $all_index_bundles_keyed[$env_id][$entity_type][] = $bundle;
   }
 
   $all_variables = db_select('apachesolr_environment_variable', 'v')
@@ -2946,8 +2935,7 @@ function apachesolr_environment_load_subrecords(&$environments) {
  *   Second configuration array.
  * @param bool  $ignore_state
  *   Whether to ignore state variables, such as `apachesolr_index_last`,
- *   `apachesolr_index_updated`, `apachesolr_last_optimize_success` and
- *   `apachesolr_last_optimize_attempt`
+ *   `apachesolr_index_updated`, and `apachesolr_last_optimize`.
  *
  * @return TRUE if both arrays are considered equal, FALSE otherwise.
  */
@@ -2972,8 +2960,7 @@ function apachesolr_environment_conf_state_variables() {
     $_keys = array(
       'apachesolr_index_last',
       'apachesolr_index_updated',
-      'apachesolr_last_optimize_attempt',
-      'apachesolr_last_optimize_success',
+      'apachesolr_last_optimize',
     );
     // Use array_combine() to make it easier to use in array_diff_key().
     // @see apachesolr_environment_conf_equals()
@@ -3042,27 +3029,4 @@ function apachesolr_ctools_environment_export($environment, $indent) {
   $additions_top = array();
   $additions_bottom = array('conf' => $environment->conf, 'index_bundles' => $index_bundles);
   return ctools_export_object('apachesolr_environment', $environment, $indent, NULL, $additions_top, $additions_bottom);
-}
-
-/**
- * Log exceptions.
- * @param $env_id
- *   The environment ID.
- * @param \Exception $e
- */
-function apachesolr_log_exception($env_id, $exception) {
-  // TODO: Should we call watchdog_exception() from here?
-  $backtrace = $exception->getTrace();
-  $caller = _drupal_get_last_caller($backtrace);
-  watchdog(
-    'Apache Solr',
-    'Exception caught for function %function (line %line of %file), Environment @env_id: ' . nl2br(check_plain($exception->getMessage())),
-    array(
-      '%function' => $caller['function'],
-      '%file' => $caller['file'],
-      '%line' => $caller['line'],
-      '@env_id' => $env_id,
-    ),
-    WATCHDOG_ERROR
-  );
 }
