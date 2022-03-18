@@ -65,8 +65,8 @@
  */
 ?>
 <?php
-  $url = check_url($result['fields']['url'][0]);
-  $title = check_plain($result['fields']['label'][0]);
+  $url = !empty($url) ? $url : check_url($result['fields']['url'][0]);
+  $title = !empty($title) ? $title : check_plain($result['fields']['label'][0]);
   //$variables['snippet'] = check_plain($result['fields']['snippet']);
 ?>
 <li class="<?php print $classes; ?>"<?php print $attributes; ?>>
